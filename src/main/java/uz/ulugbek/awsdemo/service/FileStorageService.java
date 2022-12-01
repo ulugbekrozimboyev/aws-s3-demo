@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import uz.ulugbek.awsdemo.entity.ImageMetadata;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -27,13 +28,30 @@ public class FileStorageService {
     @Autowired
     private AmazonS3 amazonS3;
 
-    public String uploadFile(MultipartFile file){
+    @Autowired
+    private ImageMetadataService imageMetadataService;
+
+    public ImageMetadata uploadFile(MultipartFile file){
+        // save temporary file
         File fileObj = convertMultipartToFile(file);
+
         String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
         PutObjectResult result = amazonS3.putObject(new PutObjectRequest(bucketName, fileName, fileObj));
+
+        // delete temp file
         fileObj.delete();
 
-        return fileName;
+        // save to DB
+        ImageMetadata imageMetadata = ImageMetadata.builder()
+                                            .name(fileName)
+                                            .contentType(file.getContentType())
+                                            .originalName(file.getOriginalFilename())
+                                            .fileSize(file.getSize())
+                                        .build();
+
+        ImageMetadata dbImageMetadata = imageMetadataService.save(imageMetadata);
+
+        return dbImageMetadata;
     }
 
     @SneakyThrows
@@ -62,5 +80,11 @@ public class FileStorageService {
         }
 
         return convertedFile;
+    }
+
+    public void deleteFileById(Long id) throws Exception {
+        ImageMetadata imageMetadata = imageMetadataService.findById(id);
+        deleteFile(imageMetadata.getName());
+        imageMetadataService.delete(id);
     }
 }
