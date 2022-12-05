@@ -31,6 +31,9 @@ public class FileStorageService {
     @Autowired
     private ImageMetadataService imageMetadataService;
 
+    @Autowired
+    private SubscriptionService subscriptionService;
+
     public ImageMetadata uploadFile(MultipartFile file){
         // save temporary file
         File fileObj = convertMultipartToFile(file);
@@ -50,6 +53,7 @@ public class FileStorageService {
                                         .build();
 
         ImageMetadata dbImageMetadata = imageMetadataService.save(imageMetadata);
+        subscriptionService.sendEmail(imageMetadata.toString());
 
         return dbImageMetadata;
     }
