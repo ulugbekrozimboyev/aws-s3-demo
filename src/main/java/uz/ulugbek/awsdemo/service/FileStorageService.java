@@ -31,12 +31,16 @@ public class FileStorageService {
     @Autowired
     private ImageMetadataService imageMetadataService;
 
+    @Autowired
+    private ImageMetadataSQSPublisherService imageMetadataSQSPublisherService;
+
     public ImageMetadata uploadFile(MultipartFile file){
         // save temporary file
         File fileObj = convertMultipartToFile(file);
 
         String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
         PutObjectResult result = amazonS3.putObject(new PutObjectRequest(bucketName, fileName, fileObj));
+        log.info(result.getVersionId());
 
         // delete temp file
         fileObj.delete();
@@ -50,8 +54,15 @@ public class FileStorageService {
                                         .build();
 
         ImageMetadata dbImageMetadata = imageMetadataService.save(imageMetadata);
+        imageMetadataSQSPublisherService.publish(imageMetadata);
 
         return dbImageMetadata;
+    }
+
+    @SneakyThrows
+    public byte[] downloadFile(Long id) {
+        ImageMetadata imageMetadata = imageMetadataService.findById(id);
+        return downloadFile(imageMetadata.getName());
     }
 
     @SneakyThrows
@@ -59,8 +70,7 @@ public class FileStorageService {
         S3Object s3Object = amazonS3.getObject(bucketName, filename);
         S3ObjectInputStream inputStream = s3Object.getObjectContent();
         try {
-            byte[] content = IOUtils.toByteArray(inputStream);
-            return content;
+            return IOUtils.toByteArray(inputStream);
         } catch (IOException e) {
             e.printStackTrace();
         }

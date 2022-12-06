@@ -14,13 +14,14 @@ import java.sql.Timestamp;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "image_metadata")
+@ToString
 public class ImageMetadata {
 
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "image_metadata_id_seq")
+    @SequenceGenerator(name = "image_metadata_id_seq", allocationSize = 1)
     private Long id;
 
     @Column(name = "name")
