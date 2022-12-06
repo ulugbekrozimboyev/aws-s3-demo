@@ -25,25 +25,28 @@ public class ImageMetadataSQSPublisherService {
     }
 
     public boolean publish(ImageMetadata imageMetadata) {
-        MessageChannel messageChannel
-                = new QueueMessageChannel(amazonSQSAsync, QUEUE_NAME);
 
-        String message = null;
         try {
-            message = objectMapper.writeValueAsString(imageMetadata);
+            MessageChannel messageChannel
+                    = new QueueMessageChannel(amazonSQSAsync, QUEUE_NAME);
+
+            String message = objectMapper.writeValueAsString(imageMetadata);
+
+
+            Message<String> msg = MessageBuilder.withPayload(message)
+                    .setHeader("sender", "app1")
+                    .setHeaderIfAbsent("country", "AE")
+                    .build();
+
+            long waitTimeoutMillis = 5000;
+            boolean sentStatus = messageChannel.send(msg, waitTimeoutMillis);
+            log.info("message sent");
+            return sentStatus;
+
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
 
-        Message<String> msg = MessageBuilder.withPayload(message)
-                .setHeader("sender", "app1")
-                .setHeaderIfAbsent("country", "AE")
-                .build();
-
-        long waitTimeoutMillis = 5000;
-        boolean sentStatus = messageChannel.send(msg, waitTimeoutMillis);
-        log.info("message sent");
-        return sentStatus;
     }
 
 }

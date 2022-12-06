@@ -1,7 +1,6 @@
 package uz.ulugbek.awsdemo.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.aws.messaging.listener.SqsMessageDeletionPolicy;
@@ -27,8 +26,6 @@ public class AwsSqsListener {
         try {
             ImageMetadata imageMetadata = objectMapper.readValue(message, ImageMetadata.class);
             subscriptionService.sendEmail(imageMetadata);
-        } catch (JsonMappingException e) {
-            throw new RuntimeException(e);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

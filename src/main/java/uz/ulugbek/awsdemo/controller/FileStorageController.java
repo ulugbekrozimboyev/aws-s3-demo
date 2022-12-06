@@ -28,7 +28,7 @@ public class FileStorageController {
     }
 
     @PostMapping("/upload")
-    public ResponseEntity uploadFile(@RequestParam(value = "file")  MultipartFile file) {
+    public ResponseEntity<ImageMetadata> uploadFile(@RequestParam(value = "file")  MultipartFile file) {
         ImageMetadata imageMetadata = fileStorageService.uploadFile(file);
 
         return ResponseEntity.ok(imageMetadata);

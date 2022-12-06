@@ -40,6 +40,7 @@ public class FileStorageService {
 
         String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
         PutObjectResult result = amazonS3.putObject(new PutObjectRequest(bucketName, fileName, fileObj));
+        log.info(result.getVersionId());
 
         // delete temp file
         fileObj.delete();
@@ -61,15 +62,7 @@ public class FileStorageService {
     @SneakyThrows
     public byte[] downloadFile(Long id) {
         ImageMetadata imageMetadata = imageMetadataService.findById(id);
-        S3Object s3Object = amazonS3.getObject(bucketName, imageMetadata.getName());
-        S3ObjectInputStream inputStream = s3Object.getObjectContent();
-        try {
-            byte[] content = IOUtils.toByteArray(inputStream);
-            return content;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
+        return downloadFile(imageMetadata.getName());
     }
 
     @SneakyThrows
@@ -77,8 +70,7 @@ public class FileStorageService {
         S3Object s3Object = amazonS3.getObject(bucketName, filename);
         S3ObjectInputStream inputStream = s3Object.getObjectContent();
         try {
-            byte[] content = IOUtils.toByteArray(inputStream);
-            return content;
+            return IOUtils.toByteArray(inputStream);
         } catch (IOException e) {
             e.printStackTrace();
         }
