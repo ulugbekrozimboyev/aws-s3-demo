@@ -32,7 +32,7 @@ public class FileStorageService {
     private ImageMetadataService imageMetadataService;
 
     @Autowired
-    private SubscriptionService subscriptionService;
+    private ImageMetadataSQSPublisherService imageMetadataSQSPublisherService;
 
     public ImageMetadata uploadFile(MultipartFile file){
         // save temporary file
@@ -53,9 +53,23 @@ public class FileStorageService {
                                         .build();
 
         ImageMetadata dbImageMetadata = imageMetadataService.save(imageMetadata);
-        subscriptionService.sendEmail(imageMetadata.toString());
+        imageMetadataSQSPublisherService.publish(imageMetadata);
 
         return dbImageMetadata;
+    }
+
+    @SneakyThrows
+    public byte[] downloadFile(Long id) {
+        ImageMetadata imageMetadata = imageMetadataService.findById(id);
+        S3Object s3Object = amazonS3.getObject(bucketName, imageMetadata.getName());
+        S3ObjectInputStream inputStream = s3Object.getObjectContent();
+        try {
+            byte[] content = IOUtils.toByteArray(inputStream);
+            return content;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @SneakyThrows

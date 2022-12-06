@@ -11,6 +11,8 @@ import uz.ulugbek.awsdemo.entity.ImageMetadata;
 import uz.ulugbek.awsdemo.service.FileStorageService;
 import uz.ulugbek.awsdemo.service.ImageMetadataService;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/file")
 @AllArgsConstructor
@@ -20,7 +22,7 @@ public class FileStorageController {
     private ImageMetadataService imageMetadataService;
 
     @GetMapping
-    public ResponseEntity getAllImages(Pageable pageable) {
+    public ResponseEntity<List<ImageMetadata>> getAllImages(Pageable pageable) {
         Page<ImageMetadata> page = imageMetadataService.findAll(pageable);
         return ResponseEntity.ok().body(page.getContent());
     }
@@ -32,8 +34,20 @@ public class FileStorageController {
         return ResponseEntity.ok(imageMetadata);
     }
 
-    @GetMapping("/download/{filename}")
-    public ResponseEntity<ByteArrayResource> downloadFile(@PathVariable String filename) {
+    @GetMapping("/download/{id}")
+    public ResponseEntity<ByteArrayResource> downloadFile(@PathVariable Long id) {
+        byte[] fileContent = fileStorageService.downloadFile(id);
+
+        ByteArrayResource resource = new ByteArrayResource(fileContent);
+        return ResponseEntity.ok()
+                .contentLength(fileContent.length)
+                .header("Content-type", "application/octet-stream")
+                .header("Content-disposition", "attachment: filename=\"" + id + "\"")
+                .body(resource);
+    }
+
+    @GetMapping("/download-by-name/{filename}")
+    public ResponseEntity<ByteArrayResource> downloadFileByName(@PathVariable String filename) {
         byte[] fileContent = fileStorageService.downloadFile(filename);
 
         ByteArrayResource resource = new ByteArrayResource(fileContent);

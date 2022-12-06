@@ -4,6 +4,7 @@ import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sns.model.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import uz.ulugbek.awsdemo.entity.ImageMetadata;
 import uz.ulugbek.awsdemo.entity.Subscriber;
 import uz.ulugbek.awsdemo.repository.SubscriberRepository;
 
@@ -44,6 +45,21 @@ public class SubscriptionService {
         }
     }
 
+
+    public void sendEmail(ImageMetadata imageMetadata) {
+        String link = String.format("http://%s:%d/api/file/download/%s",
+                "ec2-52-91-2-97.compute-1.amazonaws.com",
+                8080,
+                imageMetadata.getId()
+        );
+        String message = String.format("New Image was added. Parameters like this:\nname= %s\ncontent type: %s\nfile size: %d\n download link: %s",
+                imageMetadata.getOriginalName(),
+                imageMetadata.getContentType(),
+                imageMetadata.getFileSize(),
+                link
+        );
+        sendEmail(message);
+    }
 
     public void sendEmail(String message) {
 
